@@ -3,10 +3,9 @@ import msvcrt, os
 
 class MenuItem(object):
 
-    def __init__(self, title, items=None, command=None):
+    def __init__(self, title, items=None):
         self._title = title
         self._items = items
-        self._command = command
 
     @property
     def title(self):
@@ -16,9 +15,18 @@ class MenuItem(object):
     def items(self):
         return self._items
 
+
+class Command(MenuItem):
+
+    def __init__(self, title, command, arg=None):
+        MenuItem.__init__(self, title, None)
+
+        self._command = command
+        self._arg = arg
+
     def invoke_command(self):
         if self._command is not None:
-            self._command
+            self._command(self._arg)
 
             print("Press any key to continue...")
             msvcrt.getch()
@@ -26,8 +34,6 @@ class MenuItem(object):
             return True
 
         return False
-
-
 
 class Menu(object):
 
@@ -74,7 +80,7 @@ class MenuController(object):
 
     def __init__(self, items):
         self._history = []
-        self.main_menu = items
+        self.main_menu = Menu(items)
         self.current_menu = self.main_menu
 
     def draw(self):
@@ -89,11 +95,14 @@ class MenuController(object):
         self.draw()
 
     def select(self):
-        if self.current_menu.selected_item.invoke_command():
+
+        if isinstance(self.current_menu.selected_item, Command):
+            self.current_menu.selected_item.invoke_command()
             return
 
-        if self.current_menu.selected_item.items is not None:
+        if isinstance(self.current_menu.selected_item, MenuItem):
             # add current menu to history
+
             self._history.append(self.current_menu)
             self.current_menu = Menu(self.current_menu.selected_item.items)
 
@@ -103,17 +112,22 @@ class MenuController(object):
             self.current_menu = self._history.pop()
 
 
-def volume_up():
-    print "VOLUME UP"
+def volume_up(arg):
+    print "RUNNING COMMAND: VOLUME UP"
 
-def volume_down():
-    print "VOLUME DOWN"
+def volume_down(arg):
+    print "RUNNING COMMAND: VOLUME DOWN"
 
-main_menu = Menu([
+def on_play(arg):
+    print "RUNNING COMMAND: PLAY: " + str(arg)
+    pass
+
+
+main_menu = [
     MenuItem("Playlists", [
-        MenuItem("Playlist 1"),
-        MenuItem("Playlist 2"),
-        MenuItem("Playlist 3")
+        Command("Playlist 1", on_play, 1),
+        Command("Playlist 1", on_play),
+        Command("Playlist 1", on_play),
     ]),
     MenuItem("Radio", [
         MenuItem("Radio Station 1"),
@@ -124,41 +138,44 @@ main_menu = Menu([
         MenuItem("IP Address"),
         MenuItem("Shutdown"),
     ]),
-    MenuItem("Volume UP", volume_up),
-    MenuItem("Volume DOWN", volume_down)
-
-])
+    Command("Volume UP", volume_up),
+    Command("Volume DOWN", volume_down)
+]
 
 menuController = MenuController(main_menu)
+menuController.select()
+menuController.select()
 
 
 
-while True:
-    os.system('cls')
-    menuController.draw()
-
-    ky = msvcrt.getch()
-    length = len(ky)
-    if length != 0:
-        # send events to event handling functions
-        if ky == " ":
-            raise SystemExit
-        else:
-            if ky == '\x00' or ky == '\xe0':
-                ky = msvcrt.getch()
-
-            if ord(ky) == 72: #up
-                menuController.up()
-                continue
-
-            if ord(ky) == 80: # down
-                menuController.down()
-                continue
-
-            if ord(ky) == 13: #enter
-                menuController.select()
-                continue
-
-            if ord(ky) == 8: # backspace
-                menuController.back()
-                continue
+#
+#
+# while True:
+#     os.system('cls')
+#     menuController.draw()
+#
+#     ky = msvcrt.getch()
+#     length = len(ky)
+#     if length != 0:
+#         # send events to event handling functions
+#         if ky == " ":
+#             raise SystemExit
+#         else:
+#             if ky == '\x00' or ky == '\xe0':
+#                 ky = msvcrt.getch()
+#
+#             if ord(ky) == 72: #up
+#                 menuController.up()
+#                 continue
+#
+#             if ord(ky) == 80: # down
+#                 menuController.down()
+#                 continue
+#
+#             if ord(ky) == 13: #enter
+#                 menuController.select()
+#                 continue
+#
+#             if ord(ky) == 8: # backspace
+#                 menuController.back()
+#                 continue
