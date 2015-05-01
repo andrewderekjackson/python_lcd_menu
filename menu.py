@@ -1,4 +1,8 @@
-import msvcrt, os
+import os
+
+from input import InputController
+from display import DisplayController
+from commands import InputCommand
 
 
 class MenuItem(object):
@@ -44,6 +48,10 @@ class Menu(object):
     @property
     def selected_index(self):
         return self._selected_index
+    
+    @property
+    def items(self):
+        return self._items
 
     @selected_index.setter
     def selected_index(self, val):
@@ -62,14 +70,6 @@ class Menu(object):
     def up(self):
         self.selected_index -= 1
 
-    def draw(self):
-
-        for (index, item) in enumerate(self._items):
-            if index == self._selected_index:
-                print ">> " + item.title + " <<"
-            else:
-                print "   " + item.title
-
     @property
     def selected_item(self):
         return self._items[self._selected_index]
@@ -78,21 +78,20 @@ class Menu(object):
 
 class MenuController(object):
 
-    def __init__(self, items):
+    def __init__(self, items, display):
         self._history = []
         self.main_menu = Menu(items)
         self.current_menu = self.main_menu
+        self.display = display
 
-    def draw(self):
-        self.current_menu.draw()
 
     def up(self):
         self.current_menu.up()
-        self.draw()
+        self.display.update(self)
 
     def down(self):
         self.current_menu.down()
-        self.draw()
+        self.display.update(self)
 
     def select(self):
 
@@ -105,11 +104,25 @@ class MenuController(object):
 
             self._history.append(self.current_menu)
             self.current_menu = Menu(self.current_menu.selected_item.items)
+            
+            self.display.update(self)
 
     def back(self):
 
         if len(self._history) > 0:
             self.current_menu = self._history.pop()
+
+        self.display.update(self)
+
+    def input(command):
+        if command == InputCommand.UP:
+            self.up()
+        if command == InputCommand.Down:
+            self.down()
+        if command == InputCommand.SELECT:
+            self.select()
+        if command == InputCommand.BACK:
+            self.back()
 
 
 def volume_up(arg):
@@ -142,40 +155,9 @@ main_menu = [
     Command("Volume DOWN", volume_down)
 ]
 
-menuController = MenuController(main_menu)
-menuController.select()
-menuController.select()
+displayController = DisplayController()
+menuController = MenuController(main_menu, displayController)
+inputController = InputController(menuController.input)
 
 
-
-#
-#
-# while True:
-#     os.system('cls')
-#     menuController.draw()
-#
-#     ky = msvcrt.getch()
-#     length = len(ky)
-#     if length != 0:
-#         # send events to event handling functions
-#         if ky == " ":
-#             raise SystemExit
-#         else:
-#             if ky == '\x00' or ky == '\xe0':
-#                 ky = msvcrt.getch()
-#
-#             if ord(ky) == 72: #up
-#                 menuController.up()
-#                 continue
-#
-#             if ord(ky) == 80: # down
-#                 menuController.down()
-#                 continue
-#
-#             if ord(ky) == 13: #enter
-#                 menuController.select()
-#                 continue
-#
-#             if ord(ky) == 8: # backspace
-#                 menuController.back()
-#                 continue
+inputController.loop()
