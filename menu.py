@@ -1,15 +1,17 @@
 import os
 
 from input import InputController
-from display import DisplayController
+from display import ConsoleDisplayController, LcdDisplayController
 from commands import InputCommand
 
 
 class MenuItem(object):
 
-    def __init__(self, title, items=None):
+    def __init__(self, title, items=None, refresh_callback=None, refresh_callback_args = None):
         self._title = title
         self._items = items
+        self._refresh_callback = refresh_callback
+        self._refresh_callback_args = refresh_callback_args
 
     @property
     def title(self):
@@ -19,6 +21,9 @@ class MenuItem(object):
     def items(self):
         return self._items
 
+    def refresh(self):
+        if self._refresh_callback is not None:
+            self._items = self._refresh_callback(self, self._refresh_callback_args)
 
 class Command(MenuItem):
 
@@ -30,14 +35,12 @@ class Command(MenuItem):
 
     def invoke_command(self):
         if self._command is not None:
-            self._command(self._arg)
-
-            print("Press any key to continue...")
-            msvcrt.getch()
-
+            self._command(self, self._arg)
             return True
-
         return False
+
+    def refresh(self):
+        pass
 
 class Menu(object):
 
@@ -70,6 +73,10 @@ class Menu(object):
     def up(self):
         self.selected_index -= 1
 
+    def refresh(self):
+        self.selected_item.refresh()
+        
+
     @property
     def selected_item(self):
         return self._items[self._selected_index]
@@ -84,14 +91,16 @@ class MenuController(object):
         self.current_menu = self.main_menu
         self.display = display
 
+        self.display.update(self.current_menu)
+
 
     def up(self):
         self.current_menu.up()
-        self.display.update(self)
+        self.display.update(self.current_menu)
 
     def down(self):
         self.current_menu.down()
-        self.display.update(self)
+        self.display.update(self.current_menu)
 
     def select(self):
 
@@ -100,24 +109,28 @@ class MenuController(object):
             return
 
         if isinstance(self.current_menu.selected_item, MenuItem):
-            # add current menu to history
 
-            self._history.append(self.current_menu)
-            self.current_menu = Menu(self.current_menu.selected_item.items)
+            self.current_menu.selected_item.refresh()
+
+            if self.current_menu.selected_item.items is not None:
+
+                # add current menu to history
+                self._history.append(self.current_menu)
+                self.current_menu = Menu(self.current_menu.selected_item.items)
             
-            self.display.update(self)
+        self.display.update(self.current_menu)
 
     def back(self):
 
         if len(self._history) > 0:
             self.current_menu = self._history.pop()
 
-        self.display.update(self)
+        self.display.update(self.current_menu)
 
-    def input(command):
+    def input(self, command):
         if command == InputCommand.UP:
             self.up()
-        if command == InputCommand.Down:
+        if command == InputCommand.DOWN:
             self.down()
         if command == InputCommand.SELECT:
             self.select()
@@ -125,23 +138,31 @@ class MenuController(object):
             self.back()
 
 
-def volume_up(arg):
+def volume_up(item, arg):
     print "RUNNING COMMAND: VOLUME UP"
 
-def volume_down(arg):
+
+def volume_down(item, arg):
     print "RUNNING COMMAND: VOLUME DOWN"
 
-def on_play(arg):
-    print "RUNNING COMMAND: PLAY: " + str(arg)
+def on_play(item, arg):
+    print "RUNNING COMMAND: PLAY: " + item.title
     pass
+
+def load_playlists(item, arg):
+    
+    items = []
+
+    items.append(Command("Dynamic 1", on_play))
+    items.append(Command("Dynamic 2", on_play))
+    items.append(Command("Dynamic 3", on_play))
+    items.append(Command("Dynamic 4", on_play))
+        
+    return items
 
 
 main_menu = [
-    MenuItem("Playlists", [
-        Command("Playlist 1", on_play, 1),
-        Command("Playlist 1", on_play),
-        Command("Playlist 1", on_play),
-    ]),
+    MenuItem("Playlists", refresh_callback=load_playlists),
     MenuItem("Radio", [
         MenuItem("Radio Station 1"),
         MenuItem("Radio Station 2"),
@@ -155,7 +176,7 @@ main_menu = [
     Command("Volume DOWN", volume_down)
 ]
 
-displayController = DisplayController()
+displayController = LcdDisplayController()
 menuController = MenuController(main_menu, displayController)
 inputController = InputController(menuController.input)
 

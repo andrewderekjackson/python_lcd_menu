@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8806c698-b5f8-4f18-a334-f7740d3c9720}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>commands.py</StartupFile>
+    <StartupFile>menu.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
