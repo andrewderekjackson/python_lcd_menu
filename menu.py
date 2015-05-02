@@ -1,7 +1,7 @@
 import os
 
-from input import InputController
-from display import ConsoleDisplayController, LcdDisplayController
+from input_curses import *
+from display_ILI9341 import *
 from commands import InputCommand
 
 
@@ -153,7 +153,7 @@ def load_playlists(item, arg):
     
     items = []
 
-    items.append(Command("Dynamic 1", on_play))
+    items.append(Command("Andrew's Fairly Long Playlist", on_play))
     items.append(Command("Dynamic 2", on_play))
     items.append(Command("Dynamic 3", on_play))
     items.append(Command("Dynamic 4", on_play))
@@ -178,7 +178,7 @@ main_menu = [
 
 displayController = LcdDisplayController()
 menuController = MenuController(main_menu, displayController)
-inputController = InputController(menuController.input)
+inputController = CursesInputController(menuController.input)
 
 
 inputController.loop()

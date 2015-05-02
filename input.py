@@ -4,8 +4,6 @@ from commands import InputCommand
 
 class InputController(object):
 
-
-
     def __init__(self, callback):
         self._callback = callback
 
