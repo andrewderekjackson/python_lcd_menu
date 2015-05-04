@@ -1,11 +1,7 @@
 import os
 
-from input_curses import *
-from display_ILI9341 import *
-from commands import InputCommand
-
-
 class MenuItem(object):
+    '''A single menu item which can contain child menu items'''
 
     def __init__(self, title, items=None, refresh_callback=None, refresh_callback_args = None):
         self._title = title
@@ -26,6 +22,7 @@ class MenuItem(object):
             self._items = self._refresh_callback(self, self._refresh_callback_args)
 
 class Command(MenuItem):
+    '''A single menu item which executes a callback when selected'''
 
     def __init__(self, title, command, arg=None):
         MenuItem.__init__(self, title, None)
@@ -42,7 +39,9 @@ class Command(MenuItem):
     def refresh(self):
         pass
 
-class Menu(object):
+
+class MenuView(object):
+    '''Represents a current menu level and tracks the selected item'''
 
     def __init__(self, items):
         self._selected_index = 0
@@ -52,10 +51,6 @@ class Menu(object):
     def selected_index(self):
         return self._selected_index
     
-    @property
-    def items(self):
-        return self._items
-
     @selected_index.setter
     def selected_index(self, val):
         if val >= len(self._items):
@@ -66,6 +61,9 @@ class Menu(object):
             else:
                 self._selected_index = 0
 
+    @property
+    def items(self):
+        return self._items
 
     def down(self):
         self.selected_index += 1
@@ -81,26 +79,24 @@ class Menu(object):
     def selected_item(self):
         return self._items[self._selected_index]
 
+class Menu(object):
+    '''Base menu controller responsible for managing the menu'''
 
-
-class MenuController(object):
-
-    def __init__(self, items, display):
+    def __init__(self, items, update):
         self._history = []
-        self.main_menu = Menu(items)
+        self.main_menu = MenuView(items)
         self.current_menu = self.main_menu
-        self.display = display
+        self.update = update
 
-        self.display.update(self.current_menu)
-
+        self.update(self.current_menu)
 
     def up(self):
         self.current_menu.up()
-        self.display.update(self.current_menu)
+        self.update(self.current_menu)
 
     def down(self):
         self.current_menu.down()
-        self.display.update(self.current_menu)
+        self.update(self.current_menu)
 
     def select(self):
 
@@ -116,69 +112,16 @@ class MenuController(object):
 
                 # add current menu to history
                 self._history.append(self.current_menu)
-                self.current_menu = Menu(self.current_menu.selected_item.items)
+                self.current_menu = MenuView(self.current_menu.selected_item.items)
             
-        self.display.update(self.current_menu)
+        self.update(self.current_menu)
 
     def back(self):
 
         if len(self._history) > 0:
             self.current_menu = self._history.pop()
 
-        self.display.update(self.current_menu)
+        self.update(self.current_menu)
 
-    def input(self, command):
-        if command == InputCommand.UP:
-            self.up()
-        if command == InputCommand.DOWN:
-            self.down()
-        if command == InputCommand.SELECT:
-            self.select()
-        if command == InputCommand.BACK:
-            self.back()
-
-
-def volume_up(item, arg):
-    print "RUNNING COMMAND: VOLUME UP"
-
-
-def volume_down(item, arg):
-    print "RUNNING COMMAND: VOLUME DOWN"
-
-def on_play(item, arg):
-    print "RUNNING COMMAND: PLAY: " + item.title
-    pass
-
-def load_playlists(item, arg):
-    
-    items = []
-
-    items.append(Command("Andrew's Fairly Long Playlist", on_play))
-    items.append(Command("Dynamic 2", on_play))
-    items.append(Command("Dynamic 3", on_play))
-    items.append(Command("Dynamic 4", on_play))
-        
-    return items
-
-
-main_menu = [
-    MenuItem("Playlists", refresh_callback=load_playlists),
-    MenuItem("Radio", [
-        MenuItem("Radio Station 1"),
-        MenuItem("Radio Station 2"),
-        MenuItem("Radio Station 3")
-    ]),
-    MenuItem("Settings", [
-        MenuItem("IP Address"),
-        MenuItem("Shutdown"),
-    ]),
-    Command("Volume UP", volume_up),
-    Command("Volume DOWN", volume_down)
-]
-
-displayController = LcdDisplayController()
-menuController = MenuController(main_menu, displayController)
-inputController = CursesInputController(menuController.input)
-
-
-inputController.loop()
+    def update(self):
+        pass

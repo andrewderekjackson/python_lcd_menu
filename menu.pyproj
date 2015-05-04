@@ -5,7 +5,7 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>{8806c698-b5f8-4f18-a334-f7740d3c9720}</ProjectGuid>
     <ProjectHome />
-    <StartupFile>menu.py</StartupFile>
+    <StartupFile>menu_ILI9341.py</StartupFile>
     <SearchPath />
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
@@ -21,11 +21,21 @@
     <PtvsTargetsFile>$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets</PtvsTargetsFile>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="commands.py" />
-    <Compile Include="curses_test.py" />
-    <Compile Include="display.py" />
-    <Compile Include="input.py" />
-    <Compile Include="menu.py" />
+    <Compile Include="lcd_menu\menu.py" />
+    <Compile Include="lcd_menu\__init__.py">
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="menu_ILI9341.py" />
+    <Compile Include="menu_console.py">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="lcd_menu\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="arial.ttf" />
+    <Content Include="LICENSE" />
   </ItemGroup>
   <Import Project="$(PtvsTargetsFile)" Condition="Exists($(PtvsTargetsFile))" />
   <Import Project="$(MSBuildToolsPath)\Microsoft.Common.targets" Condition="!Exists($(PtvsTargetsFile))" />
