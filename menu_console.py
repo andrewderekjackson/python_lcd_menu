@@ -7,12 +7,6 @@ class ConsoleRadioMenu(Menu):
 
     def __init__(self):
 
-        # standard curses init
-        self.stdscr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        self.stdscr.keypad(1)
-    
         # our example menu definition
         items = [
             MenuItem("Playlists", refresh_callback=self.load_playlists),
@@ -34,20 +28,36 @@ class ConsoleRadioMenu(Menu):
 
     def loop(self):
         '''Main application loop. Receives input and dispatches one of either "up", "down", "select" or "back" commands.'''
-        
-        while 1:
-            c = self.stdscr.getch()
 
-            if c == curses.KEY_UP:
-                self.up()
-            if c == curses.KEY_DOWN:
-                self.down()
-            if c == 8:  # backspace
-                self.back()
-            if c == 10: # enter
-                self.select()
-            if c == ord('q'):
-                break  
+        # standard curses init
+        self.stdscr = curses.initscr()
+        curses.noecho()
+        curses.cbreak()
+        self.stdscr.keypad(1)
+
+        # display the initial menu
+        self.update(self.current_menu)
+
+        try:
+            while 1:
+                c = self.stdscr.getch()
+
+                if c == curses.KEY_UP:
+                    self.up()
+                if c == curses.KEY_DOWN:
+                    self.down()
+                if c == curses.KEY_BACKSPACE or c == 8:  # backspace
+                    self.back()
+                if c == curses.KEY_SELECT or c == 10: # enter
+                    self.select()
+                if c == ord('q'):
+                    raise SystemExit
+
+        finally:
+            curses.nocbreak()
+            self.stdscr.keypad(0)
+            curses.echo()
+            curses.endwin()
 
     def update(self, menu):
         '''Called to draw the current menu view.'''
@@ -82,3 +92,7 @@ class ConsoleRadioMenu(Menu):
         items.append(Command("Dynamic 4", self.on_play))
         
         return items
+
+
+radioMenu = ConsoleRadioMenu()
+radioMenu.loop()

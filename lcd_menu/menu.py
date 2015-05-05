@@ -88,8 +88,6 @@ class Menu(object):
         self.current_menu = self.main_menu
         self.update = update
 
-        self.update(self.current_menu)
-
     def up(self):
         self.current_menu.up()
         self.update(self.current_menu)
