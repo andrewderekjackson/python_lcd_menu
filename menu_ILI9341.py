@@ -1,7 +1,8 @@
 # for menu
+import threading
 from lcd_menu import Command, MenuItem, Menu
 
-import os, curses
+import os, time
 
 # for PIL
 import Image, ImageFont, ImageDraw, textwrap
@@ -10,6 +11,8 @@ import Image, ImageFont, ImageDraw, textwrap
 import Adafruit_ILI9341 as TFT
 import Adafruit_GPIO as GPIO
 import Adafruit_GPIO.SPI as SPI
+
+from rotary_encoder import RotaryEncoder
 
 # Screen dimentions
 X_MAX = 320
@@ -22,6 +25,13 @@ RST = 23
 SPI_PORT = 0
 SPI_DEVICE = 0
 
+# Rotary encoder
+ROTARY_PIN_A = 14  # Pin 8
+ROTARY_PIN_B = 15  # Pin 10
+ROTARY_BUTTON = 4  # Pin 7
+
+# import gaugette.rotary_encoder
+
 
 class RadioMenu(Menu):
     '''An example menu which received input from keyboard and outputs to a ILI9341 TFT display.'''
@@ -31,6 +41,9 @@ class RadioMenu(Menu):
         # Initialize display.
         self.disp = TFT.ILI9341(DC, rst=RST, spi=SPI.SpiDev(SPI_PORT, SPI_DEVICE, max_speed_hz=64000000))
         self.disp.begin()
+
+        # Initialize rotary encoder
+        self.rotary_encoder = RotaryEncoder(ROTARY_PIN_A, ROTARY_PIN_B, ROTARY_BUTTON, self.rotary_encoder_event)
 
         self.current_dir = os.path.dirname(os.path.realpath(__file__))
 
@@ -56,38 +69,57 @@ class RadioMenu(Menu):
         # pass all this to the base class
         return super(RadioMenu, self).__init__(items, self.update)
 
+    def rotary_encoder_event(self, event):
+        if event == RotaryEncoder.CLOCKWISE:
+            print "REC: CLOCKWISE"
+            self.down()
+        elif event == RotaryEncoder.ANTICLOCKWISE:
+            print "REC: ANTICLOCKWISE"
+            self.up()
+        elif event == RotaryEncoder.BUTTON_PRESSED:
+            print "REC: BUTTON_PRESSED"
+            self.select()
+        elif event == RotaryEncoder.BUTTON_LONG_PRESSED:
+            print "REC: BUTTON_LONG_PRESSED"
+            self.back()
+
+        return
+
     def loop(self):
         '''Main application loop. Receives input and dispatches one of either "up", "down", "select" or "back" commands.'''
-
-        # standard curses init
-        self.stdscr = curses.initscr()
-        curses.noecho()
-        curses.cbreak()
-        self.stdscr.keypad(1)
 
         # display initial menu
         self.update(self.current_menu)
 
-        try:
-            while 1:
-                c = self.stdscr.getch()
+        while True:
+            pass
 
-                if c == curses.KEY_UP:
-                    self.up()
-                if c == curses.KEY_DOWN:
-                    self.down()
-                if c == curses.KEY_BACKSPACE or c == 8:  # backspace
-                    self.back()
-                if c == curses.KEY_SELECT or c == 10:  # enter
-                    self.select()
-                if c == ord('q'):
-                    raise SystemExit
+        # self.rotary_encoder.start()
+        #
+        # last_delta = 0
+        # while True:
+        #
+        #     delta = self.rotary_encoder.get_delta()
+        #
+        #     if delta != 0:
+        #         last_delta += delta
+        #
+        #         if last_delta%4 == 0:
+        #             if delta == 1:
+        #                 self.down()
+        #             if delta == -1:
+        #                 self.up()
 
-        finally:
-            curses.nocbreak()
-            self.stdscr.keypad(0)
-            curses.echo()
-            curses.endwin()
+        #    print ("rotate %d" % delta)
+
+        # if delta == -1:
+        #     print "ANTICLOCKWISE"
+        #     #self.up()
+        #
+        # if delta == 1:
+        #     print "CLOCKWISE"
+        #     #self.down()
+
 
 
     def draw_centered_text(self, text, font, fill=(255, 255, 255)):
