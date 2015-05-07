@@ -39,7 +39,6 @@ class Command(MenuItem):
     def refresh(self):
         pass
 
-
 class MenuView(object):
     '''Represents a current menu level and tracks the selected item'''
 
@@ -88,15 +87,37 @@ class Menu(object):
         self.current_menu = self.main_menu
         self.update = update
 
+        self.showing_menu = False
+
+        # start with the menu closed
+        self.close()
+
+    def menu(self):
+        """
+        Shows the main menu
+        """
+        self.current_menu = self.main_menu
+        self.showing_menu = True
+        self.update(self.current_menu)
+
     def up(self):
+        """
+        Navigates up in the menu
+        """
         self.current_menu.up()
         self.update(self.current_menu)
 
     def down(self):
+        """
+        Navigates down in the menu
+        """
         self.current_menu.down()
         self.update(self.current_menu)
 
     def select(self):
+        """
+        Selects the current menu. Either enters a submenu or invokes the command
+        """
 
         if isinstance(self.current_menu.selected_item, Command):
             self.current_menu.selected_item.invoke_command()
@@ -115,11 +136,33 @@ class Menu(object):
         self.update(self.current_menu)
 
     def back(self):
+        """
+        Returns back to a previous menu
+        """
 
         if len(self._history) > 0:
             self.current_menu = self._history.pop()
+            self.update(self.current_menu)
+        else:
+            self.close()
 
+    def show(self):
+        """
+        Shows the main menu
+        """
+
+        self.current_menu = self.main_menu
+        self.showing_menu = True
         self.update(self.current_menu)
+
+    def close(self):
+        """
+        Closes the menu.
+        """
+        self.current_menu = None
+        self.showing_menu = False
+        self.update(self.current_menu)
+        pass
 
     def update(self):
         pass
